@@ -4,6 +4,7 @@ import java.sql.DriverManager
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.SQLException
+import scala.io.StdIn._
 
 object JDBC1 {
 
@@ -17,9 +18,13 @@ object JDBC1 {
 
     var connection:Connection = DriverManager.getConnection(url, username, password)
     val statement = connection.createStatement()
-    val insertSet = statement.executeQuery( "INSERT INTO content VALUE (3,'This is my first entry from the IDE');")
-    val resultSet = statement.executeQuery("SELECT * FROM content;")
 
+    println("Welcome to the Note DB App")
+    val noteUser = readLine("Please enter your username: ")
+    val notePass = readLine("Please enter your password: ")
+
+    val resultSet = statement.executeQuery("SELECT * FROM users;")
+    //val sql = statement.executeUpdate("INSERT INTO users VALUES (100, 'notetaker', 'passpass');")
 
     while ( resultSet.next() ) {
       println(resultSet.getString(1)+", " +resultSet.getString(2)+", " +resultSet.getString(3))
