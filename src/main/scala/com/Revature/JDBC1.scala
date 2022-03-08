@@ -20,8 +20,28 @@ object JDBC1 {
     val statement = connection.createStatement()
 
     println("Welcome to the Note DB App")
+
     val noteUser = readLine("Please enter your username: ")
     val notePass = readLine("Please enter your password: ")
+    //Check noteUser and notePass against the user table in db, if not valid then loop
+
+    println(
+      """
+        |Please select an option from the menu
+        |1. Compose new note
+        |2. Read previous note
+        |3. Log out
+        |""".stripMargin)
+    var menuSelect = readInt()
+    menuSelect match {
+      case 1 =>
+
+      case 2 =>
+
+      case 3 =>
+
+      case _ =>
+    }
 
     val resultSet = statement.executeQuery("SELECT * FROM users;")
     //val sql = statement.executeUpdate("INSERT INTO users VALUES (100, 'notetaker', 'passpass');")
