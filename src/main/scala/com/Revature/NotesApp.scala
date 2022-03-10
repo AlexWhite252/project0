@@ -4,7 +4,7 @@ import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, SQLExc
 import scala.io.StdIn._
 import scala.util.matching.Regex.Match
 
-object JDBC1 {
+object NotesApp {
 
   def main(args: Array[String]) {
     var menu = true
@@ -40,9 +40,19 @@ object JDBC1 {
       //Put menu options into methods
       menuSelect match {
         case 1 =>
-          writeToDB(statement, userID)
+          try{
+            writeToDB(statement, userID)
+          }
+          catch{
+            case _: Throwable => println("Exception in write method")
+          }
         case 2 =>
-          readFromDB(statement, userID)
+          try{
+            readFromDB(statement, userID)
+          }
+          catch{
+            case _: Throwable => println("Exception in read method")
+          }
         case 3 =>
           println("Logging out")
           menu = false
@@ -73,9 +83,7 @@ object JDBC1 {
   def writeToDB(statement: Statement, userID: String): Unit ={
     //Add ability to read from JSON file
     val importance = readLine("Enter your note's importance (Priority, Reminder, Misc, Secret): ")
-    //check if input is valid (matches one of the options)
     val noteText = readLine("Enter your note's text: ")
-    //check if input is valid (less than 255 characters)
     statement.executeUpdate(s"INSERT INTO contIndex (userID, importance, entryDate) VALUES (${userID}, '${importance}', CAST( CURDATE() AS Date ));")
     statement.executeUpdate(s"INSERT INTO content (entryText) VALUES ('${noteText}')")
   }
