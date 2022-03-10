@@ -1,16 +1,15 @@
 package com.Revature
 
-import java.sql.DriverManager
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.SQLException
+import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet, SQLException, Statement}
 import scala.io.StdIn._
+import scala.util.matching.Regex.Match
 
 object JDBC1 {
 
   def main(args: Array[String]) {
-    // connect to the database named "test" on the localhost
+    var menu = true
 
+    // connect to the database named "test" on the localhost
     val driver = "com.mysql.cj.jdbc.Driver"
     val url = "jdbc:mysql://localhost:3306/project0"
     val username = "root"
@@ -20,36 +19,93 @@ object JDBC1 {
     val statement = connection.createStatement()
 
     println("Welcome to the Note DB App")
-
+    //Add create account option?
     val noteUser = readLine("Please enter your username: ")
     val notePass = readLine("Please enter your password: ")
-    //Check noteUser and notePass against the user table in db, if not valid then loop
+    val credentials = statement.executeQuery(s"SELECT userID FROM users WHERE username = '${noteUser}' AND password = '${notePass}';")
+    credentials.next()
+    val userID = credentials.getString(1)
+    //Check if credentials are valid
 
-    println(
-      """
-        |Please select an option from the menu
-        |1. Compose new note
-        |2. Read previous note
-        |3. Log out
-        |""".stripMargin)
-    var menuSelect = readInt()
-    menuSelect match {
-      case 1 =>
-
-      case 2 =>
-
-      case 3 =>
-
-      case _ =>
+    //Menu system
+    while(menu){
+      println(
+        """
+          |Please select an option from the menu
+          |1. Compose new note
+          |2. Read previous note
+          |3. Log out
+          |""".stripMargin)
+      var menuSelect = readInt()
+      //Put menu options into methods
+      menuSelect match {
+        case 1 =>
+          writeToDB(statement, userID)
+        case 2 =>
+          readFromDB(statement, userID)
+        case 3 =>
+          println("Logging out")
+          menu = false
+        case _ =>
+          println("Default case")
+      }
     }
 
-    val resultSet = statement.executeQuery("SELECT * FROM users;")
-    //val sql = statement.executeUpdate("INSERT INTO users VALUES (100, 'notetaker', 'passpass');")
+    //Testing statements
+    val resultSet = statement.executeQuery("SELECT * FROM contIndex;")
+    printResults(resultSet, 4)
 
-    while ( resultSet.next() ) {
-      println(resultSet.getString(1)+", " +resultSet.getString(2)+", " +resultSet.getString(3))
-    }
     connection.close()
   }
 
+  //Print tables from a ResultSet
+  def printResults(resultSet: ResultSet, colNum: Int): Unit={
+    while ( resultSet.next() ) {
+      for(i <- 1 to colNum) {
+        print(resultSet.getString(i))
+        if(i != colNum) print(", ")
+      }
+      println("")
+    }
+  }
+
+  //Write to database functions, called from root menu option 1
+  def writeToDB(statement: Statement, userID: String): Unit ={
+    //Add ability to read from JSON file
+    val importance = readLine("Enter your note's importance (Priority, Reminder, Misc, Secret): ")
+    //check if input is valid (matches one of the options)
+    val noteText = readLine("Enter your note's text: ")
+    //check if input is valid (less than 255 characters)
+    statement.executeUpdate(s"INSERT INTO contIndex (userID, importance, entryDate) VALUES (${userID}, '${importance}', CAST( CURDATE() AS Date ));")
+    statement.executeUpdate(s"INSERT INTO content (entryText) VALUES ('${noteText}')")
+  }
+
+  //Read from database functions, called from root menu option 2
+  def readFromDB(statement: Statement, userID: String): Unit={
+    println(
+      """Please select an option from the menu
+        |1. Open all previous notes
+        |2. Open notes from today
+        |3. Exit
+        |""".stripMargin)
+    val readSelect = readInt()
+    readSelect match{
+      case 1 =>
+        println("Opening all previous notes: ")
+        val readSet = statement.executeQuery(s"SELECT i.entryDate, c.entryText " +
+          s"FROM content c INNER JOIN contIndex i " +
+          s"ON " + s"c.entryID = i.entryID WHERE i.userID = ${userID};")
+        printResults(readSet,2)
+      case 2 =>
+        println("Opening all entries from today: ")
+        val readSet = statement.executeQuery(s"SELECT i.entryDate, c.entryText " +
+          s"FROM content c INNER JOIN contIndex i " +
+          s"ON c.entryID = i.entryID WHERE i.userID = ${userID} AND i.entryDate = CAST( CURDATE() AS Date );")
+        printResults(readSet, 2)
+      case 3 =>
+        println("Exiting read menu.")
+      case _ =>
+        println("Invalid entry")
+    }
+  }
 }
